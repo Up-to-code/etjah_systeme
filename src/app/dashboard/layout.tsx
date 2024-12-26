@@ -10,12 +10,20 @@ export default async function DashboardLayout({
 }) {
   const { getUser } = getKindeServerSession();
   const user = await getUser();
+
+  // Check if user is null or if user.id is not present
+  if (!user || !user.id) {
+    return redirect("/login");  // Redirect to login if user is not authenticated or doesn't have an id
+  }
+
   const CanAccess = await prisma.user.findUnique({
     where: {
-      id: user?.id,
+      id: user.id,
     },
   });
-  if (CanAccess?.role.includes("User") || CanAccess?.role == null) {
+
+  // If user does not have access, redirect to "NotAccess" page
+  if (CanAccess?.role?.includes("User") || CanAccess?.role == null) {
     return redirect("/NotAccsess");
   }
 
