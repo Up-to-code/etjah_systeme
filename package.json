@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && bun run build",
+    "build": " bun run build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -74,7 +74,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.1.1",
     "postcss": "^8.4.49",
-    "prisma": "^6.1.0",
+    "prisma": "6.1.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   },
