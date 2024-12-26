@@ -7,9 +7,8 @@ import { checkUserIsInDb } from "@/server/chickuserIsibndb";
 
 const f = createUploadthing();
 
-// FileRouter for your app, can contain multiple FileRoutes
+// FileRouter for your app
 export const ourFileRouter = {
-  // Define as many FileRoutes as you like, each with a unique routeSlug
   mediaUploader: f({
     image: { maxFileSize: "1GB" },
     video: { maxFileSize: "16GB" },
@@ -17,29 +16,28 @@ export const ourFileRouter = {
     text: { maxFileSize: "128MB" },
     pdf: { maxFileSize: "128MB" },
   })
-    // Set permissions and file types for this FileRoute
     .middleware(async ({ req }) => {
-      // This code runs on your server before upload
       const { getUser } = getKindeServerSession();
       const user = await getUser();
 
-      // If you throw, the user will not be able to upload
-      if (!user || !user.id) throw new UploadThingError("Unauthorized");
+      if (!user || !user.id) {
+        throw new UploadThingError("Unauthorized: User session is invalid.");
+      }
 
-      // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      // This code RUNS ON YOUR SERVER after upload
       console.log("Upload complete for userId:", metadata.userId);
-      console.log("File url:", file.url);
+      console.log("File URL:", file.url);
 
       try {
+        // Ensure user exists in the database
         const user = await checkUserIsInDb(metadata.userId);
         if (!user) {
-          throw new UploadThingError("User not found");
+          throw new UploadThingError("User not found in the database.");
         }
 
+        // Create a new file upload record in the database
         const fileUpload = await prisma.fileUpload.create({
           data: {
             name: file.name,
@@ -49,21 +47,30 @@ export const ourFileRouter = {
             type: file.type,
             userId: user.userId as string,
           },
-          include: {
-            user: true,
-          },
         });
- 
+
         console.log("File upload record created:", fileUpload.id);
 
-        // Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
-        return { 
-          uploadedBy: user,
-          fileId: fileUpload.id
-        };
+        // Return a response compatible with JsonObject
+        return {
+          uploadedBy: {
+            success: true,
+            userId: user.userId,
+          },
+          fileId: fileUpload.id,
+        } as const; // Ensure it's JsonObject-compatible
       } catch (error) {
         console.error("Error in onUploadComplete:", error);
-        throw new UploadThingError("Failed to process upload");
+
+        // Return a JSON-safe error structure
+        return {
+          uploadedBy: {
+            success: false,
+            userId: metadata.userId,
+            error: error instanceof Error ? error.message : "Unknown error",
+          },
+          fileId: null,
+        } as const;
       }
     }),
 } satisfies FileRouter;
