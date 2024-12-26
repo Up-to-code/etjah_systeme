@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from "react"
-import { Search, Menu, X } from 'lucide-react'
+import { Search, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Sidebar } from "./Sidebar"
+import { Sidebar } from "@/components/ui/sidebar"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
